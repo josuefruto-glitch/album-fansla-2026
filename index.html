@@ -1260,7 +1260,7 @@ document.addEventListener('click', autoStartMusic, {once:true});
 document.addEventListener('touchstart', autoStartMusic, {once:true});
 
 // ── SUBIR FOTO ───────────────────────────────────────────────────────────────
-function subirFoto(event, stickerId, inputEl) {
+async function subirFoto(event, stickerId, inputEl) {
   const file = event.target.files[0];
   if(!file) return;
   const btn = inputEl.closest('.btn-upload-foto');
