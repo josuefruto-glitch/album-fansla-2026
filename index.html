@@ -480,23 +480,13 @@ body{
 </button>
 
 <script>
-const BIN_ID = '6a08b33badc21f119aad9874';
-const API_KEY = '$2a$10$/1SlP5V4pJ/RQKYMwI./.uyilHM51jRKSVmUZ1BD0SX44v7eoDm7.';
-const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
-// ── CARGAR FOTOS DESDE JSONBIN ──────────────────────────────────────────────
+// ── FOTOS EN LOCALSTORAGE (álbum privado por dispositivo) ──────────────────
+const LS_KEY = 'album-fansla-2026-fotos';
 let FOTOS_CACHE = {};
 
-async function cargarFotos() {
+function cargarFotos() {
   try {
-    const res = await fetch(API_URL + '/latest', {
-      headers: {
-        'X-Master-Key': API_KEY,
-        'X-Access-Key': API_KEY
-      }
-    });
-    const data = await res.json();
-    FOTOS_CACHE = data.record.fotos || {};
+    FOTOS_CACHE = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
   } catch(e) {
     FOTOS_CACHE = {};
   }
@@ -1270,7 +1260,7 @@ document.addEventListener('click', autoStartMusic, {once:true});
 document.addEventListener('touchstart', autoStartMusic, {once:true});
 
 // ── SUBIR FOTO ───────────────────────────────────────────────────────────────
-async function subirFoto(event, stickerId, inputEl) {
+function subirFoto(event, stickerId, inputEl) {
   const file = event.target.files[0];
   if(!file) return;
   const btn = inputEl.closest('.btn-upload-foto');
@@ -1297,9 +1287,8 @@ async function subirFoto(event, stickerId, inputEl) {
       reader.onerror = rej;
       reader.readAsDataURL(file);
     });
-    // Guardar en jsonbin.io
     FOTOS_CACHE[stickerId] = base64;
-    await guardarFotos();
+    guardarFotos();
     // Actualizar foto en la card sin re-renderizar todo
     const photoDiv = btn.closest('.sticker').querySelector('.sticker-photo');
     let imgEl = photoDiv.querySelector('.sticker-img');
@@ -1321,11 +1310,11 @@ async function subirFoto(event, stickerId, inputEl) {
   }
 }
 
-async function eliminarFoto(stickerId, btnEl) {
+function eliminarFoto(stickerId, btnEl) {
   if(!FOTOS_CACHE[stickerId]) return;
   if(!confirm('¿Eliminar la foto de esta figurita?')) return;
   delete FOTOS_CACHE[stickerId];
-  await guardarFotos();
+  guardarFotos();
   const card = btnEl.closest('.sticker');
   card.classList.remove('tiene-foto');
   const sticker = STICKERS.find(s => s.id === stickerId);
@@ -1335,21 +1324,17 @@ async function eliminarFoto(stickerId, btnEl) {
   mostrarToast('🗑️ Foto eliminada');
 }
 
-async function guardarFotos() {
-  await fetch(API_URL, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': API_KEY,
-      'X-Access-Key': API_KEY
-    },
-    body: JSON.stringify({ fotos: FOTOS_CACHE })
-  });
+function guardarFotos() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(FOTOS_CACHE));
+  } catch(e) {
+    mostrarToast('⚠️ Almacenamiento lleno, intenta con una foto más pequeña');
+  }
 }
 
 // ── INIT ────────────────────────────────────────────────────────────────────
-async function init() {
-  await cargarFotos();
+function init() {
+  cargarFotos();
   render();
   document.getElementById('loading').classList.add('hidden');
 }
